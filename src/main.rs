@@ -19,9 +19,12 @@ use actix_web_actors::ws;
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 
+#[macro_use]
+extern crate diesel;
+
+
 mod models;
 mod schema;
-
 
 mod api;
 mod server;
