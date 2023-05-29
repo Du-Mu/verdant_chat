@@ -16,6 +16,13 @@ use actix_web::{
 };
 use actix_web_actors::ws;
 
+use diesel::prelude::*;
+use diesel::r2d2::{self, ConnectionManager};
+
+mod models;
+mod schema;
+
+
 mod api;
 mod server;
 mod session;
@@ -27,7 +34,20 @@ fn secret_key() -> Key {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+    dotenv::dotenv().ok();
+    std::env::set_var(
+        "RUST_LOG",
+        "simple-auth-server=debug,actix_web=info,actix_server=info",
+    );
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
+    // create db connection pool
+    let manager = ConnectionManager::<MysqlConnection>::new(database_url);
+
+    let pool: models::Pool = r2d2::Pool::builder()
+        .build(manager)
+        .expect("Failed to create pool.");
+    let domain: String = std::env::var("DOMAIN").unwrap_or_else(|_| "localhost".to_string());
     // set up applications state
     // keep a count of the number of visitors
     let app_state = Arc::new(AtomicUsize::new(0));
