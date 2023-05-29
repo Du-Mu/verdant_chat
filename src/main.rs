@@ -45,6 +45,7 @@ async fn main() -> std::io::Result<()> {
             .service(web::resource("/login").route(web::post().to(api::login)))
             .service(Files::new("/static", "./static"))
             .wrap(Logger::default())
+            .wrap(IdentityMiddleware::default())
             .wrap(SessionMiddleware::new(
                 CookieSessionStore::default(),
                 secret_key().clone(),

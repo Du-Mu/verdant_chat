@@ -1,8 +1,10 @@
 use actix_files::NamedFile;
+use actix_http::HttpMessage;
+use actix_identity::Identity;
 use actix_session::Session;
 use actix_web::{
     dev, error, http::StatusCode, middleware::ErrorHandlerResponse, web, Error, HttpResponse,
-    Responder, Result,
+    Responder, Result, HttpRequest
 };
 use serde::Deserialize;
 
@@ -19,12 +21,14 @@ pub struct LoginInfo {
 pub async fn login(
     params: web::Form<LoginInfo>,
     session: Session,
+    request: HttpRequest
 ) -> Result<impl Responder, Error> {
     let params = params.into_inner();
     let username = &params.username;
+    let password = &params.password;
     
-    session.insert("islogin", true).unwrap();
-    session.insert("name", username).unwrap();
+
+    Identity::login(&request.extensions_mut(), username.into()).unwrap();
 
     log::info!("[{username}]:logging");
 
