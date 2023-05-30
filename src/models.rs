@@ -9,9 +9,9 @@ pub type Pool = r2d2::Pool<ConnectionManager<MysqlConnection>>;
 #[derive(Debug, Serialize, Deserialize, Queryable, Insertable)]
 #[table_name = "users"]
 pub struct User {
+    pub uuid: String,
     pub name: String,
     pub password: String,
-    pub uuid: String,
     pub permission_id: i32,
 }
 impl User {
@@ -55,7 +55,7 @@ impl Mess {
             time: chrono::Local::now().naive_local() + chrono::Duration::hours(24),
             content: cont.into(),
             sender_id: sender.into(),
-            room_id: room
+            room_id: room.into()
         }
     }
 }

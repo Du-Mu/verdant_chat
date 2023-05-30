@@ -1,38 +1,31 @@
 use std::{
     sync::{
-        atomic::{AtomicUsize, Ordering},
+        atomic::AtomicUsize,
         Arc,
     },
-    time::Instant,
 };
 
 use actix::*;
-use actix_files::{Files, NamedFile};
-use actix_identity::{Identity, IdentityMiddleware};
+use actix_files::{Files};
+use actix_identity::{IdentityMiddleware};
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{
-    cookie::Key, http::StatusCode, middleware::Logger, web, App, Error, HttpRequest, HttpResponse,
-    HttpServer, Responder,
+    middleware::Logger, web, App,
+    HttpServer,
 };
-use actix_web_actors::ws;
-
+//use actix::*;
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 
 #[macro_use]
 extern crate diesel;
-
-
 mod models;
 mod schema;
 
 mod api;
+mod query;
 mod server;
 mod session;
-
-fn secret_key() -> Key {
-    Key::generate()
-}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -50,7 +43,7 @@ async fn main() -> std::io::Result<()> {
     let pool: models::Pool = r2d2::Pool::builder()
         .build(manager)
         .expect("Failed to create pool.");
-    let domain: String = std::env::var("DOMAIN").unwrap_or_else(|_| "localhost".to_string());
+
     // set up applications state
     // keep a count of the number of visitors
     let app_state = Arc::new(AtomicUsize::new(0));
@@ -62,16 +55,22 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
+            .app_data(web::Data::new(pool.clone()))
             .app_data(web::Data::from(app_state.clone()))
             .app_data(web::Data::new(server.clone()))
             .service(web::resource("/").route(web::get().to(api::index)))
             .service(web::resource("/login").route(web::post().to(api::login)))
+            .service(web::resource("/rigister").route(web::get().to(api::rigister)))
+            .service(web::resource("/rigister_post").route(web::post().to(api::rigister_post)))
             .service(Files::new("/static", "./static"))
+            .service(web::resource("/chatroom").to(api::chatroom))
+            .route("/count", web::get().to(api::get_count))
+            .route("/ws", web::get().to(api::chat_route))
             .wrap(Logger::default())
             .wrap(IdentityMiddleware::default())
             .wrap(SessionMiddleware::new(
                 CookieSessionStore::default(),
-                secret_key().clone(),
+                api::secret_key().clone(),
             ))
     })
     .workers(2)
