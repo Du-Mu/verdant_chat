@@ -19,7 +19,11 @@ pub fn query_user_from_id(user_id: &String, pool: web::Data<Pool>) -> Option<Use
 }
 pub fn delete_user(user: &String, pool: web::Data<Pool>) -> Result<usize, diesel::result::Error> {
     use crate::schema::users::dsl::{name, users};
+    use crate::schema::messages::dsl::{messages, sender_id};
     let conn = &pool.get().expect("Fail to conect");
+    if let Some(value) = query_user(user, pool){
+        diesel::delete(messages.filter(sender_id.eq(&value.uuid))).execute(conn).expect("Fail to delete msg");
+    }
     diesel::delete(users.filter(name.eq(&user))).execute(conn)
 }
 pub fn insert_user(user: &String, pass: &String,pool: web::Data<Pool>) -> Result<usize, diesel::result::Error>{

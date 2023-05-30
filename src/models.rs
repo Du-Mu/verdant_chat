@@ -20,7 +20,7 @@ impl User {
             name: user.into(),
             password: pass.into(),
             uuid: Uuid::new_v4().clone().to_string(),
-            permission_id: 1,
+            permission_id: 0,
         }
     }
 }
