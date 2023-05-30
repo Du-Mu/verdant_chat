@@ -126,5 +126,5 @@ pub async fn rigister_post(
     } else {
         query::insert_user(user_na, &digest(pass_wo.to_owned()), pool).expect("Fail to insert user");
     }
-    Ok(web::Redirect::to("/login").using_status_code(StatusCode::FOUND))
+    Ok(web::Redirect::to("/").using_status_code(StatusCode::FOUND))
 }
